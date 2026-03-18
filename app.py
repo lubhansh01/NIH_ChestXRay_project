@@ -74,7 +74,11 @@ if uploaded_file is not None:
     # --------------------------------------------------
     st.subheader("🔍 Model Predictions")
     
-    st.subheader("🔍 Top 5 Predictions")
+    for label, prob in zip(DISEASE_LABELS, probabilities):
+        st.write(f"**{label}** : {prob:.2f}")
+
+    st.subheader("🔍 Top 5 Predictions") 
+
     top_5_indices = np.argsort(probabilities)[-5:][::-1]
     
     for idx in top_5_indices:
@@ -103,23 +107,16 @@ if uploaded_file is not None:
     # --------------------------------------------------
     # RAG-grounded explanation
     # --------------------------------------------------
-    st.subheader("📚 AI Explanation (RAG-grounded)")
-
     st.subheader("📚 AI Explanation (Top 5 - RAG grounded)")
     
     for idx in top_5_indices:
         label = DISEASE_LABELS[idx]
-    prob = probabilities[idx]
-    
-    if label in KNOWLEDGE_BASE:
-        st.markdown(f"**{label} ({prob:.2f})**: {KNOWLEDGE_BASE[label]}")
-    else:
-        st.markdown(
-            f"**{label} ({prob:.2f})**: No detailed knowledge available. Clinical correlation recommended."
-        )
+        prob = probabilities[idx]
         
-        if not found:
-            st.info(
-                "No high-confidence abnormal findings detected. "
-                "Clinical correlation is recommended."
+        if label in KNOWLEDGE_BASE:
+            st.markdown(f"**{label} ({prob:.2f})**: {KNOWLEDGE_BASE[label]}")
+            
+        else:
+            st.markdown(
+                f"**{label} ({prob:.2f})**: No detailed knowledge available. Clinical correlation recommended."
                 )
