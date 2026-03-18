@@ -73,9 +73,12 @@ if uploaded_file is not None:
     # Predictions
     # --------------------------------------------------
     st.subheader("🔍 Model Predictions")
-
-    for label, prob in zip(DISEASE_LABELS, probabilities):
-        st.write(f"**{label}** : {prob:.2f}")
+    
+    st.subheader("🔍 Top 5 Predictions")
+    top_5_indices = np.argsort(probabilities)[-5:][::-1]
+    
+    for idx in top_5_indices:
+        st.write(f"**{DISEASE_LABELS[idx]}** : {probabilities[idx]:.2f}")
 
     # --------------------------------------------------
     # Grad-CAM
@@ -85,7 +88,7 @@ if uploaded_file is not None:
     target_layer = model.model.features[-1]
     gradcam = GradCAM(model, target_layer)
 
-    top_class = int(np.argmax(probabilities))
+    top_class = top_5_indices[0]
     cam = gradcam.generate(input_tensor, top_class)
 
     img_resized = np.array(image.resize((224, 224)))
@@ -102,14 +105,21 @@ if uploaded_file is not None:
     # --------------------------------------------------
     st.subheader("📚 AI Explanation (RAG-grounded)")
 
-    found = False
-    for label, prob in zip(DISEASE_LABELS, probabilities):
-        if prob > 0.5 and label in KNOWLEDGE_BASE:
-            st.markdown(f"**{label}**: {KNOWLEDGE_BASE[label]}")
-            found = True
-
-    if not found:
-        st.info(
-            "No high-confidence abnormal findings detected. "
-            "Clinical correlation is recommended."
+    st.subheader("📚 AI Explanation (Top 5 - RAG grounded)")
+    
+    for idx in top_5_indices:
+        label = DISEASE_LABELS[idx]
+    prob = probabilities[idx]
+    
+    if label in KNOWLEDGE_BASE:
+        st.markdown(f"**{label} ({prob:.2f})**: {KNOWLEDGE_BASE[label]}")
+    else:
+        st.markdown(
+            f"**{label} ({prob:.2f})**: No detailed knowledge available. Clinical correlation recommended."
         )
+        
+        if not found:
+            st.info(
+                "No high-confidence abnormal findings detected. "
+                "Clinical correlation is recommended."
+                )
